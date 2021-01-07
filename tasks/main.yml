@@ -22,11 +22,11 @@
               line="+:{{ item }}:ALL"'
   register: reg_slurm_access_conf
   with_items: "{{ slurm_access_groups }}"
-  when: pam_enabled|bool and pam_enable_slurm|bool
+  when: pam_enabled|bool and ( pam_enable_slurm|bool or  pam_enable_slurm_adopt|bool )
 
 - name: lineinfile deny all at the end of /etc/security/access.conf
   lineinfile: 'dest="/etc/security/access.conf"
                regexp="(^\-\:ALL\:ALL$)"
                line="-:ALL:ALL"
                insertafter="EOF"'
-  when: reg_slurm_access_conf is success and pam_enabled|bool and pam_enable_slurm|bool
+  when: reg_slurm_access_conf is success and pam_enabled|bool and ( pam_enable_slurm|bool or pam_enable_slurm_adopt|bool )
