@@ -2,19 +2,25 @@
 # This file is auto-generated.
 # User changes will be destroyed the next time authconfig is run.
 auth        required      pam_env.so
+auth        required      pam_faildelay.so delay=2000000
 auth        sufficient    pam_unix.so nullok try_first_pass
 auth        requisite     pam_succeed_if.so uid >= 1000 quiet_success
-{% if pam_use_sssd %}
+{% if pam_use_ldap %}
+auth        sufficient    pam_ldap.so use_first_pass
+{% elif pam_use_sssd %}
 auth        sufficient    pam_sss.so use_first_pass
 {% endif %}
 auth        required      pam_deny.so
 
-account     required      pam_unix.so
+account     required      pam_unix.so{% if pam_use_ldap %} broken_shadow{% endif %}
+
 {% if not pam_enable_slurm_adopt %}
 account     sufficient    pam_localuser.so
 {% endif %}
 account     sufficient    pam_succeed_if.so uid < 1000 quiet
-{% if pam_use_sssd %}
+{% if pam_use_ldap %}
+account     [default=bad success=ok user_unknown=ignore] pam_ldap.so
+{% elif pam_use_sssd %}
 account     [default=bad success=ok user_unknown=ignore] pam_sss.so
 {% endif %}
 {% if pam_enable_slurm %}
@@ -27,8 +33,10 @@ account     required      pam_access.so
 account     required      pam_permit.so
 
 password    requisite     pam_pwquality.so try_first_pass local_users_only retry=3 authtok_type=
-password    sufficient    pam_unix.so sha512 shadow nis nullok try_first_pass use_authtok
-{% if pam_use_sssd %}
+password    sufficient    pam_unix.so sha512 shadow {% if pam_use_sssd %}nis {% endif %}nullok try_first_pass use_authtok
+{% if pam_use_ldap %}
+password    sufficient    pam_ldap.so use_authtok
+{% elif pam_use_sssd %}
 password    sufficient    pam_sss.so use_authtok
 {% endif %}
 password    required      pam_deny.so
@@ -40,6 +48,8 @@ session     required      pam_limits.so
 {% endif %}
 session     [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
 session     required      pam_unix.so
-{% if pam_use_sssd %}
+{% if pam_use_ldap %}
+session     optional      pam_ldap.so
+{% elif pam_use_sssd %}
 session     optional      pam_sss.so
 {% endif %}

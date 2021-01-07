@@ -2,7 +2,11 @@
 # defaults file for ansible-role-pam
 pam_enabled: False
 
+# Note this assumes FreeIPA and therefore NIS is available
 pam_use_sssd: False
+
+# If both ldap and sssd are enabled, ldap + NIS is used
+pam_use_ldap: False
 
 # Enable the pam_slurm.so module
 pam_enable_slurm: False
